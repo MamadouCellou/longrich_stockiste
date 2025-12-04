@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "769590155198",
+    "project_id": "longrich-stockiste",
+    "storage_bucket": "longrich-stockiste.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:769590155198:android:1e71277f09f08059a60bef",
+        "android_client_info": {
+          "package_name": "com.example.longrich_stockiste"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCr86g1_J00XuAFcaydnfQ_yWP_4HiZs2w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
