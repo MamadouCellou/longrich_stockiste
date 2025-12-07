@@ -20,11 +20,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   bool _isLoading = false;
 
+  late String codeUser;
+  late String emailUser;
+
   late TextEditingController nomCtrl;
   late TextEditingController prenomCtrl;
   late TextEditingController telCtrl;
   late TextEditingController adresseCtrl;
-  late TextEditingController matriculeCtrl;
   late TextEditingController confirmationCodeCtrl;
 
   bool inputTelValidation = true;
@@ -40,9 +42,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
     prenomCtrl = TextEditingController(text: user?.prenom ?? "");
     telCtrl = TextEditingController(text: user?.tel ?? "");
     adresseCtrl = TextEditingController(text: user?.adresse ?? "");
-    matriculeCtrl = TextEditingController(text: user?.matricule ?? "");
     confirmationCodeCtrl = TextEditingController(text: user?.confirmCode ?? "");
-
+    codeUser = user!.matricule!;
+    emailUser = user!.email;
     dateNaissance = user?.dateNaissance;
   }
 
@@ -52,7 +54,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     prenomCtrl.dispose();
     telCtrl.dispose();
     adresseCtrl.dispose();
-    matriculeCtrl.dispose();
     confirmationCodeCtrl.dispose();
     super.dispose();
   }
@@ -96,7 +97,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       email: _userController.email,
       tel: telCtrl.text.trim(),
       adresse: adresseCtrl.text.trim(),
-      matricule: matriculeCtrl.text.trim(),
+      matricule: codeUser,
       isAdmin: oldUser.isAdmin,
       confirmCode: confirmationCodeCtrl.text.trim(),
       fcmToken: oldUser.fcmToken,
@@ -149,6 +150,36 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
+  Widget _buildInfoBox({required IconData icon, required String label, required String value}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.blueGrey),
+          const SizedBox(width: 10),
+          Text(
+            "$label : ",
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(color: Colors.black87),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
   Widget _buildForm() {
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -156,6 +187,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
         key: _formKey,
         child: ListView(
           children: [
+            _buildInfoBox(icon: Icons.email, label: "Email", value: emailUser),
+            _buildInfoBox(icon: Icons.confirmation_number, label: "Code Stockiste", value: codeUser),
+
             TextFormField(
               controller: nomCtrl,
               decoration: const InputDecoration(labelText: "Nom"),
@@ -202,11 +236,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
             const SizedBox(height: 20),
 
-            CodeFormField(
-                controller: matriculeCtrl,
-                label: "Matricule",
-                isStockiste: true,
-                maxLength: 6),
 
             TextFormField(
               controller: confirmationCodeCtrl,

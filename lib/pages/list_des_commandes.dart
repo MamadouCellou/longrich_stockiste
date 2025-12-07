@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:longrich_stockiste/pages/grade_checker.dart';
 import 'package:longrich_stockiste/pages/promotion_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../controllers/user_controller.dart';
@@ -232,17 +233,11 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
             .toList();
 
       case PurchaseFilterOption.all_not_pos_not_valid:
-        return purchases
-            .where((p) => !p.positioned && !p.validated)
-            .toList();
+        return purchases.where((p) => !p.positioned && !p.validated).toList();
       case PurchaseFilterOption.all_pos_not_valid:
-        return purchases
-            .where((p) => p.positioned && !p.validated)
-            .toList();
+        return purchases.where((p) => p.positioned && !p.validated).toList();
       case PurchaseFilterOption.all_pos_valid:
-        return purchases
-            .where((p) => p.positioned && p.validated)
-            .toList();
+        return purchases.where((p) => p.positioned && p.validated).toList();
 
       // 🟠 GROUPE REHAUSSEMENT
       case PurchaseFilterOption.rh_not_pos_not_valid:
@@ -469,6 +464,10 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                       Navigator.push(context,
                           MaterialPageRoute(builder: (_) => GestionProduits()));
                       break;
+                    case 'verificateur':
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (_) => GradeCheckerApp()));
+                      break;
                     case 'corbeille':
                       Navigator.push(
                         context,
@@ -479,12 +478,10 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                         ),
                       );
                       break;
-                      case 'profil':
+                    case 'profil':
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => EditProfilePage()
-                        ),
+                        MaterialPageRoute(builder: (_) => EditProfilePage()),
                       );
                       break;
                     case 'promotion':
@@ -517,6 +514,25 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                       value: 'statisques',
                       child: Text("Voir statisques"),
                     ),
+                    PopupMenuDivider(),
+                    PopupMenuItem(
+                        child: Theme(
+                          data: Theme.of(context).copyWith(
+                            dividerColor: Colors.transparent,  // 🔥 enlève les bordures
+                          ),
+                          child: ExpansionTile(
+                            title: Text("Outils"),
+                            showTrailingIcon: false,
+                            initiallyExpanded: true,
+                            children: [
+                              PopupMenuItem(
+                                value: 'verificateur',
+                                child: Text("Vérificateur D4 et moins"),
+                              ),
+                            ],
+                          ),
+                        )
+                    ),
                     PopupMenuItem(
                       value: 'promotion',
                       child: Text(isAdmin
@@ -536,23 +552,22 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                         value: 'produits',
                         child: Text("Gerer les produits"),
                       ),
-
                     ]);
                   }
 
-                  items.add( const PopupMenuItem(
-                    value: 'corbeille',
-                    child: Text("Corbeille"),
-                  ),);
+                  items.add(
+                    const PopupMenuItem(
+                      value: 'corbeille',
+                      child: Text("Corbeille"),
+                    ),
+                  );
 
                   items.add(const PopupMenuDivider());
 
-                  items.add(
-                      const PopupMenuItem(
-                        value: 'profil',
-                        child: Text("Modifier profil"),
-                      )
-                  );
+                  items.add(const PopupMenuItem(
+                    value: 'profil',
+                    child: Text("Modifier profil"),
+                  ));
 
                   items.add(const PopupMenuDivider());
                   items.add(
@@ -812,75 +827,115 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                                                               extentRatio: 0.25,
                                                               children: [
                                                                 SlidableAction(
-                                                                  onPressed: (context) async {
+                                                                  onPressed:
+                                                                      (context) async {
                                                                     try {
                                                                       // 1️⃣ Vérification : commandes incomplètes ne peuvent PAS être positionnées
                                                                       if (purchase.paymentMethod == "debt" ||
-                                                                          purchase.paymentMethod == "semi_cash" ||
-                                                                          purchase.paymentMethod == "semi_orange_money" ||
-                                                                          purchase.paymentMethod == "semi_ecash") {
+                                                                          purchase.paymentMethod ==
+                                                                              "semi_cash" ||
+                                                                          purchase.paymentMethod ==
+                                                                              "semi_orange_money" ||
+                                                                          purchase.paymentMethod ==
+                                                                              "semi_ecash") {
                                                                         showErrorSnackbar(
-                                                                          context: context,
-                                                                          message: "Payer complètement la commande avant de positionner.",
+                                                                          context:
+                                                                              context,
+                                                                          message:
+                                                                              "Payer complètement la commande avant de positionner.",
                                                                         );
                                                                         return;
                                                                       }
 
                                                                       // 2️⃣ CAS : on veut DÉPOSITIONNER → mais la commande est validée
-                                                                      if (purchase.positioned && purchase.validated) {
+                                                                      if (purchase
+                                                                              .positioned &&
+                                                                          purchase
+                                                                              .validated) {
                                                                         showErrorSnackbar(
-                                                                          context: context,
-                                                                          message: "Invalider la commande avant de dépositionner !",
+                                                                          context:
+                                                                              context,
+                                                                          message:
+                                                                              "Invalider la commande avant de dépositionner !",
                                                                         );
                                                                         return; // ⛔ On stoppe avant le code PIN
                                                                       }
 
                                                                       // 3️⃣ On demande le code PIN SEULEMENT SI l’action est autorisée
-                                                                      final confirmed = await showPinConfirmationDialog(context);
-                                                                      if (!confirmed) return;
+                                                                      final confirmed =
+                                                                          await showPinConfirmationDialog(
+                                                                              context);
+                                                                      if (!confirmed)
+                                                                        return;
 
                                                                       // 4️⃣ Exécution
-                                                                      if (!purchase.positioned) {
+                                                                      if (!purchase
+                                                                          .positioned) {
                                                                         // 👉 Positionner
-                                                                        final success = await purchaseService.markPositioned(purchase.id!);
-                                                                        if (!mounted) return;
+                                                                        final success =
+                                                                            await purchaseService.markPositioned(purchase.id!);
+                                                                        if (!mounted)
+                                                                          return;
                                                                         if (success) {
-                                                                          setState(() => purchase.positioned = true);
+                                                                          setState(() =>
+                                                                              purchase.positioned = true);
                                                                           showSucessSnackbar(
-                                                                            context: context,
-                                                                            message: "Commande positionnée 📌",
+                                                                            context:
+                                                                                context,
+                                                                            message:
+                                                                                "Commande positionnée 📌",
                                                                           );
                                                                         }
                                                                       } else {
                                                                         // 👉 Dépositionner (ici déjà validé = impossible, car filtré plus haut)
-                                                                        final success = await purchaseService.unmarkPositioned(purchase.id!);
-                                                                        if (!mounted) return;
+                                                                        final success =
+                                                                            await purchaseService.unmarkPositioned(purchase.id!);
+                                                                        if (!mounted)
+                                                                          return;
                                                                         if (success) {
-                                                                          setState(() => purchase.positioned = false);
+                                                                          setState(() =>
+                                                                              purchase.positioned = false);
                                                                           showSucessSnackbar(
-                                                                            context: context,
-                                                                            message: "Commande dépositionnée ❌",
+                                                                            context:
+                                                                                context,
+                                                                            message:
+                                                                                "Commande dépositionnée ❌",
                                                                           );
                                                                         }
                                                                       }
-
                                                                     } catch (e) {
-                                                                      if (!mounted) return;
-                                                                      print("Erreur inattendue ❌ : $e");
+                                                                      if (!mounted)
+                                                                        return;
+                                                                      print(
+                                                                          "Erreur inattendue ❌ : $e");
                                                                       showErrorSnackbar(
-                                                                        context: context,
-                                                                        message: "Erreur inattendue ❌ : $e",
+                                                                        context:
+                                                                            context,
+                                                                        message:
+                                                                            "Erreur inattendue ❌ : $e",
                                                                       );
                                                                     }
                                                                   },
-
-                                                                  backgroundColor:
-                                                                  purchase.positioned ? Colors.orange : Colors.blue,
-                                                                  foregroundColor: Colors.white,
-                                                                  icon: purchase.positioned ? Icons.undo : Icons.push_pin,
-                                                                  label: purchase.positioned ? "Déposition" : "Positionner",
+                                                                  backgroundColor: purchase
+                                                                          .positioned
+                                                                      ? Colors
+                                                                          .orange
+                                                                      : Colors
+                                                                          .blue,
+                                                                  foregroundColor:
+                                                                      Colors
+                                                                          .white,
+                                                                  icon: purchase
+                                                                          .positioned
+                                                                      ? Icons
+                                                                          .undo
+                                                                      : Icons
+                                                                          .push_pin,
+                                                                  label: purchase
+                                                                          .positioned
+                                                                      ? "Déposition"
+                                                                      : "Positionner",
                                                                 ),
-
                                                               ],
                                                             ),
                                                             endActionPane:
@@ -890,69 +945,97 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                                                               extentRatio: 0.25,
                                                               children: [
                                                                 SlidableAction(
-                                                                  onPressed: (context) async {
-                                                                    final parentContext = this.context; // 👈 Le bon contexte
+                                                                  onPressed:
+                                                                      (context) async {
+                                                                    final parentContext =
+                                                                        this.context; // 👈 Le bon contexte
 
                                                                     try {
                                                                       // 1️⃣ Commande doit être positionnée avant validation
-                                                                      if (!purchase.positioned) {
+                                                                      if (!purchase
+                                                                          .positioned) {
                                                                         showErrorSnackbar(
-                                                                          context: parentContext,
-                                                                          message: "Positionner d'abord avant de valider.",
+                                                                          context:
+                                                                              parentContext,
+                                                                          message:
+                                                                              "Positionner d'abord avant de valider.",
                                                                         );
                                                                         return;
                                                                       }
 
                                                                       // 2️⃣ Vérification PIN
-                                                                      final pinConfirmed = await showPinConfirmationDialog(parentContext);
-                                                                      if (!pinConfirmed) return;
+                                                                      final pinConfirmed =
+                                                                          await showPinConfirmationDialog(
+                                                                              parentContext);
+                                                                      if (!pinConfirmed)
+                                                                        return;
 
-                                                                      if (!purchase.validated) {
+                                                                      if (!purchase
+                                                                          .validated) {
                                                                         // 3️⃣ Validation
-                                                                        final success = await purchaseService.markValidated(purchase.id!);
-                                                                        if (!mounted) return;
+                                                                        final success =
+                                                                            await purchaseService.markValidated(purchase.id!);
+                                                                        if (!mounted)
+                                                                          return;
 
                                                                         if (success) {
-                                                                          setState(() => purchase.validated = true);
+                                                                          setState(() =>
+                                                                              purchase.validated = true);
                                                                           showSucessSnackbar(
-                                                                            context: parentContext,
-                                                                            message: "Commande validée ✅",
+                                                                            context:
+                                                                                parentContext,
+                                                                            message:
+                                                                                "Commande validée ✅",
                                                                           );
                                                                         }
                                                                       } else {
                                                                         // 4️⃣ Invalidation → 2 vérifications
 
-                                                                        final confirmed = await showConfirmationBottomSheet(
-                                                                          context: parentContext,
-                                                                          action: "Invalider",
-                                                                          correctName: purchase.buyerName,
-                                                                          correctMatricule: purchase.gn,
+                                                                        final confirmed =
+                                                                            await showConfirmationBottomSheet(
+                                                                          context:
+                                                                              parentContext,
+                                                                          action:
+                                                                              "Invalider",
+                                                                          correctName:
+                                                                              purchase.buyerName,
+                                                                          correctMatricule:
+                                                                              purchase.gn,
                                                                         );
-                                                                        if (confirmed != true) return;
+                                                                        if (confirmed !=
+                                                                            true)
+                                                                          return;
 
-                                                                        final success = await purchaseService.unmarkValidated(purchase.id!);
-                                                                        if (!mounted) return;
+                                                                        final success =
+                                                                            await purchaseService.unmarkValidated(purchase.id!);
+                                                                        if (!mounted)
+                                                                          return;
 
                                                                         if (success) {
-                                                                          setState(() => purchase.validated = false);
+                                                                          setState(() =>
+                                                                              purchase.validated = false);
                                                                           showSucessSnackbar(
-                                                                            context: parentContext,
-                                                                            message: "Commande invalidée ❌",
+                                                                            context:
+                                                                                parentContext,
+                                                                            message:
+                                                                                "Commande invalidée ❌",
                                                                           );
                                                                         }
                                                                       }
-
                                                                     } catch (e) {
-                                                                      if (!mounted) return;
+                                                                      if (!mounted)
+                                                                        return;
 
-                                                                      print("Erreur inattendue ❌ : $e");
+                                                                      print(
+                                                                          "Erreur inattendue ❌ : $e");
                                                                       showErrorSnackbar(
-                                                                        context: parentContext,
-                                                                        message: "Erreur inattendue ❌ : $e",
+                                                                        context:
+                                                                            parentContext,
+                                                                        message:
+                                                                            "Erreur inattendue ❌ : $e",
                                                                       );
                                                                     }
                                                                   },
-
                                                                   backgroundColor: purchase
                                                                           .validated
                                                                       ? Colors
@@ -977,15 +1060,21 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                                                             ),
                                                             child: // 🔹 ExpansionTile inchangé (affichage de la commande, badges, items, etc.)
                                                                 GestureDetector(
-                                                                  onLongPress: () => CopyHelper.copyText(
-                                                                    context: context,
-                                                                    text: purchase.gn,
-                                                                    name: "Matricule",
-                                                                  ),
-                                                                  child: ExpansionTile(
-                                                                                                                                title: Text(purchase
+                                                              onLongPress: () =>
+                                                                  CopyHelper
+                                                                      .copyText(
+                                                                context:
+                                                                    context,
+                                                                text:
+                                                                    purchase.gn,
+                                                                name:
+                                                                    "Matricule",
+                                                              ),
+                                                              child:
+                                                                  ExpansionTile(
+                                                                title: Text(purchase
                                                                     .buyerName),
-                                                                                                                                subtitle: Wrap(
+                                                                subtitle: Wrap(
                                                                   spacing: 6,
                                                                   runSpacing: 4,
                                                                   crossAxisAlignment:
@@ -994,19 +1083,22 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                                                                   children: [
                                                                     // Matricule / GN
                                                                     SizedBox(
-                                                                      width: 120,
-                                                                      child: Text(
+                                                                      width:
+                                                                          120,
+                                                                      child:
+                                                                          Text(
                                                                         purchase
                                                                             .gn,
                                                                         overflow:
-                                                                            TextOverflow
-                                                                                .ellipsis,
+                                                                            TextOverflow.ellipsis,
                                                                       ),
                                                                     ),
                                                                     // Type de commande
                                                                     SizedBox(
-                                                                      width: 120,
-                                                                      child: Text(
+                                                                      width:
+                                                                          120,
+                                                                      child:
+                                                                          Text(
                                                                         purchase.purchaseType == 'Retail' &&
                                                                                 purchase.cycleRetail != null &&
                                                                                 purchase.cycleRetail!.isNotEmpty
@@ -1023,10 +1115,8 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                                                                         Container(
                                                                           padding: const EdgeInsets
                                                                               .symmetric(
-                                                                              horizontal:
-                                                                                  6,
-                                                                              vertical:
-                                                                                  2),
+                                                                              horizontal: 6,
+                                                                              vertical: 2),
                                                                           decoration:
                                                                               BoxDecoration(
                                                                             color: purchase.positioned
@@ -1040,9 +1130,8 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                                                                             purchase.positioned
                                                                                 ? "Positionné"
                                                                                 : "Non positionné",
-                                                                            style: const TextStyle(
-                                                                                fontSize: 10,
-                                                                                color: Colors.white),
+                                                                            style:
+                                                                                const TextStyle(fontSize: 10, color: Colors.white),
                                                                           ),
                                                                         ),
                                                                         SizedBox(
@@ -1053,10 +1142,8 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                                                                         Container(
                                                                           padding: const EdgeInsets
                                                                               .symmetric(
-                                                                              horizontal:
-                                                                                  6,
-                                                                              vertical:
-                                                                                  2),
+                                                                              horizontal: 6,
+                                                                              vertical: 2),
                                                                           decoration:
                                                                               BoxDecoration(
                                                                             color: purchase.validated
@@ -1070,16 +1157,16 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                                                                             purchase.validated
                                                                                 ? "Validée"
                                                                                 : "Non validée",
-                                                                            style: const TextStyle(
-                                                                                fontSize: 10,
-                                                                                color: Colors.white),
+                                                                            style:
+                                                                                const TextStyle(fontSize: 10, color: Colors.white),
                                                                           ),
                                                                         ),
                                                                       ],
                                                                     ),
                                                                   ],
-                                                                                                                                ),
-                                                                                                                                trailing: Column(
+                                                                ),
+                                                                trailing:
+                                                                    Column(
                                                                   crossAxisAlignment:
                                                                       CrossAxisAlignment
                                                                           .end,
@@ -1095,8 +1182,8 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                                                                         purchase
                                                                             .paymentMethod))
                                                                   ],
-                                                                                                                                ),
-                                                                                                                                children: [
+                                                                ),
+                                                                children: [
                                                                   if (items
                                                                       .isEmpty)
                                                                     const Padding(
@@ -1117,17 +1204,13 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                                                                       child:
                                                                           Column(
                                                                         crossAxisAlignment:
-                                                                            CrossAxisAlignment
-                                                                                .start,
+                                                                            CrossAxisAlignment.start,
                                                                         children:
-                                                                            items.map(
-                                                                                (item) {
+                                                                            items.map((item) {
                                                                           final manquant =
-                                                                              item.quantityTotal -
-                                                                                  item.quantityReceived;
+                                                                              item.quantityTotal - item.quantityReceived;
                                                                           final restant =
-                                                                              item.quantityTotal -
-                                                                                  item.quantityPaid;
+                                                                              item.quantityTotal - item.quantityPaid;
                                                                           final isPromo =
                                                                               item.isPromo;
 
@@ -1170,14 +1253,10 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                                                                                 Theme.of(context).copyWith(dividerColor: Colors.transparent),
                                                                             child:
                                                                                 ExpansionTile(
-                                                                              key:
-                                                                                  ValueKey(item.productId),
-                                                                              tilePadding:
-                                                                                  const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-                                                                              childrenPadding:
-                                                                                  const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-                                                                              title:
-                                                                                  Text(
+                                                                              key: ValueKey(item.productId),
+                                                                              tilePadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                                                                              childrenPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                                                                              title: Text(
                                                                                 "${item.quantityTotal} ${item.productName}",
                                                                                 style: TextStyle(color: isPromo ? Colors.blueAccent : null),
                                                                               ),
@@ -1194,24 +1273,24 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                                                                     ),
 
                                                                   SizedBox(
-                                                                      height: 16),
+                                                                      height:
+                                                                          16),
 
                                                                   // 🔹 Totaux paiement & PV
                                                                   Padding(
-                                                                    padding:
-                                                                        const EdgeInsets
-                                                                            .only(
-                                                                            left:
-                                                                                16.0),
-                                                                    child: Align(
+                                                                    padding: const EdgeInsets
+                                                                        .only(
+                                                                        left:
+                                                                            16.0),
+                                                                    child:
+                                                                        Align(
                                                                       alignment:
                                                                           Alignment
                                                                               .centerLeft,
                                                                       child:
                                                                           Column(
                                                                         crossAxisAlignment:
-                                                                            CrossAxisAlignment
-                                                                                .start,
+                                                                            CrossAxisAlignment.start,
                                                                         children: [
                                                                           Text(
                                                                               "Payé: ${currencyFormat.format(purchase.totalPaid)} - reste : ${currencyFormat.format(purchase.totalRemaining)}"),
@@ -1229,15 +1308,13 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                                                                           .comment!
                                                                           .isNotEmpty)
                                                                     Padding(
-                                                                      padding:
-                                                                          const EdgeInsets
-                                                                              .all(
-                                                                              16.0),
+                                                                      padding: const EdgeInsets
+                                                                          .all(
+                                                                          16.0),
                                                                       child:
                                                                           Align(
                                                                         alignment:
-                                                                            Alignment
-                                                                                .centerLeft,
+                                                                            Alignment.centerLeft,
                                                                         child:
                                                                             Column(
                                                                           crossAxisAlignment:
@@ -1245,19 +1322,15 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                                                                           children: [
                                                                             Text(
                                                                               "Commentaires :",
-                                                                              style:
-                                                                                  TextStyle(fontStyle: FontStyle.italic),
+                                                                              style: TextStyle(fontStyle: FontStyle.italic),
                                                                             ),
                                                                             Container(
-                                                                              padding:
-                                                                                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                                              decoration:
-                                                                                  BoxDecoration(
+                                                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                                              decoration: BoxDecoration(
                                                                                 color: Colors.blueGrey,
                                                                                 borderRadius: BorderRadius.circular(12),
                                                                               ),
-                                                                              child:
-                                                                                  Text(
+                                                                              child: Text(
                                                                                 purchase.comment!,
                                                                                 overflow: TextOverflow.ellipsis,
                                                                                 style: const TextStyle(fontSize: 12, color: Colors.white),
@@ -1280,13 +1353,11 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                                                                             left:
                                                                                 16.0),
                                                                         child: Text(
-                                                                            formatDate(
-                                                                                purchase.createdAt)),
+                                                                            formatDate(purchase.createdAt)),
                                                                       ),
                                                                       Row(
                                                                         children: [
-                                                                          purchase.updatedAt !=
-                                                                                  null
+                                                                          purchase.updatedAt != null
                                                                               ? IconButton(
                                                                                   icon: const Icon(Icons.edit_calendar),
                                                                                   onPressed: () {
@@ -1305,16 +1376,13 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                                                                           // ------------------------------------------------
                                                                           Builder(builder:
                                                                               (context) {
-                                                                            bool hasPromoProduits = items.any((item) =>
-                                                                                item.isPromo ==
-                                                                                true);
+                                                                            bool
+                                                                                hasPromoProduits =
+                                                                                items.any((item) => item.isPromo == true);
 
-                                                                            return PopupMenuButton<
-                                                                                String>(
-                                                                              icon:
-                                                                                  const Icon(Icons.more_vert),
-                                                                              onSelected:
-                                                                                  (value) async {
+                                                                            return PopupMenuButton<String>(
+                                                                              icon: const Icon(Icons.more_vert),
+                                                                              onSelected: (value) async {
                                                                                 if (value == 'promo') {
                                                                                   final itemsRes = await _loadItems(purchase.id!);
 
@@ -1417,8 +1485,7 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                                                                                   }
                                                                                 }
                                                                               },
-                                                                              itemBuilder: (context) =>
-                                                                                  [
+                                                                              itemBuilder: (context) => [
                                                                                 if (hasPromoProduits)
                                                                                   PopupMenuItem(
                                                                                     value: 'promo',
@@ -1440,9 +1507,9 @@ class _PurchasesListPageState extends State<PurchasesListPage> {
                                                                       ),
                                                                     ],
                                                                   ),
-                                                                                                                                ],
-                                                                                                                              ),
-                                                                )),
+                                                                ],
+                                                              ),
+                                                            )),
                                                       );
                                                     },
                                                   );
